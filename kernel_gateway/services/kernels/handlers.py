@@ -8,12 +8,13 @@ import tornado
 import notebook.services.kernels.handlers as notebook_handlers
 from tornado import gen
 from functools import partial
-from ...mixins import TokenAuthorizationMixin, CORSMixin, JSONErrorsMixin
+from ...mixins import TokenAuthorizationMixin, CORSMixin, JSONErrorsMixin, JWTAuthorizationMixin
 
 
 class MainKernelHandler(TokenAuthorizationMixin,
                         CORSMixin,
                         JSONErrorsMixin,
+                        JWTAuthorizationMixin,
                         notebook_handlers.MainKernelHandler):
     """Extends the notebook main kernel handler with token auth, CORS, and
     JSON errors.
@@ -98,6 +99,7 @@ class MainKernelHandler(TokenAuthorizationMixin,
 class KernelHandler(TokenAuthorizationMixin,
                     CORSMixin,
                     JSONErrorsMixin,
+                    JWTAuthorizationMixin,
                     notebook_handlers.KernelHandler):
     """Extends the notebook kernel handler with token auth, CORS, and
     JSON errors.
@@ -114,5 +116,5 @@ for path, cls in notebook_handlers.default_handlers:
         default_handlers.append((path, globals()[cls.__name__]))
     else:
         # Gen a new type with CORS and token auth
-        bases = (TokenAuthorizationMixin, CORSMixin, cls)
+        bases = (TokenAuthorizationMixin, CORSMixin, JWTAuthorizationMixin, cls)
         default_handlers.append((path, type(cls.__name__, bases, {})))

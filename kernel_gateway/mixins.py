@@ -5,6 +5,11 @@
 import json
 import traceback
 from tornado import web
+import jwt
+from jwt import PyJWKClient 
+from auth0.v3.authentication.token_verifier import TokenVerifier, AsymmetricSignatureVerifier
+
+
 try:
     # py3
     from http.client import responses
@@ -79,6 +84,47 @@ class TokenAuthorizationMixin(object):
                 return self.send_error(401)
         return super(TokenAuthorizationMixin, self).prepare()
 
+class JWTAuthorizationMixin(object):
+    """Mixes JWT auth into tornado.web.RequestHandlers and
+    tornado.websocket.WebsocketHandlers.
+    """
+    jwt_header_prefix = "Bearer "
+    jwt_header_prefix_len = len(jwt_header_prefix)
+
+    def prepare(self):
+        """Ensures the correct jwt token is present, either as a parameter
+        header `Authorization: token <value>`.
+        Does nothing unless an auth token is configured in kg_jwt_token.
+
+        If kg_jwt_token is set and the token is not present, responds
+        with 401 Unauthorized.
+
+        Notes
+        -----
+        Implemented in prepare rather than in `get_user` to avoid interaction
+        with the `@web.authenticated` decorated methods in the notebook
+        package.
+        """
+        server_token = self.settings.get('kg_jwt_token')
+        if server_token and not self.request.method == 'OPTIONS':
+            print("JWT Token Auth Enabled....")
+            client_token = self.request.headers.get('Authorization')
+            if client_token and client_token.startswith(self.jwt_header_prefix):
+                client_token = client_token[self.jwt_header_prefix_len:]
+
+
+                jwks_url = "https://login.microsoftonline.com/c73bf3ef-87e9-48e0-ac85-9c723e6cca39/discovery/v2.0/keys"
+                sv = AsymmetricSignatureVerifier(jwks_url)  # Reusable instance
+                tv = TokenVerifier(signature_verifier=sv, issuer=server_token, audience="f67996aa-bc6f-47f6-b53e-eeec61f5079f")
+                tv.verify(client_token)
+                decoded_token = jwt.decode(client_token, options={"verify_signature": False})
+                #print(type(self) ) # kernel_gateway.notebook_http.handlers.NotebookAPIHandler
+                self.authtoken = decoded_token
+            if not client_token:
+                return self.send_error(401)
+            if decoded_token['iss'] != server_token: # Validate JWT here....
+                return self.send_error(401)
+        return super(JWTAuthorizationMixin, self).prepare()
 
 class JSONErrorsMixin(object):
     """Mixes `write_error` into tornado.web.RequestHandlers to respond with

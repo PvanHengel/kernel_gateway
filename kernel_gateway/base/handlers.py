@@ -4,11 +4,12 @@
 
 from tornado import web
 import notebook.base.handlers as notebook_handlers
-from ..mixins import TokenAuthorizationMixin, CORSMixin, JSONErrorsMixin
+from ..mixins import TokenAuthorizationMixin, CORSMixin, JSONErrorsMixin, JWTAuthorizationMixin
 
 class APIVersionHandler(TokenAuthorizationMixin,
                         CORSMixin,
                         JSONErrorsMixin,
+                        JWTAuthorizationMixin,
                         notebook_handlers.APIVersionHandler):
     """Extends the notebook server base API handler with token auth, CORS, and
     JSON errors.

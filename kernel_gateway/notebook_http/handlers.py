@@ -11,13 +11,14 @@ from .request_utils import (parse_body, parse_args, format_request,
     headers_to_dict, parameterize_path)
 from tornado import gen
 from tornado.concurrent import Future
-from ..mixins import TokenAuthorizationMixin, CORSMixin, JSONErrorsMixin
+from ..mixins import TokenAuthorizationMixin, CORSMixin, JSONErrorsMixin, JWTAuthorizationMixin
 from functools import partial
 from .errors import UnsupportedMethodError, CodeExecutionError
 
 class NotebookAPIHandler(TokenAuthorizationMixin,
                          CORSMixin,
                          JSONErrorsMixin,
+                         JWTAuthorizationMixin,
                          tornado.web.RequestHandler):
     """Executes code from a notebook cell in response to HTTP requests at the
     route registered in association with this class.
@@ -53,6 +54,7 @@ class NotebookAPIHandler(TokenAuthorizationMixin,
         self.kernel_name = kernel_name
         self.response_sources = response_sources
         self.kernel_language = kernel_language
+        self.authtoken = None
 
     def finish_future(self, future, result_accumulator):
         """Resolves the promise to respond to a HTTP request handled by a
@@ -180,11 +182,13 @@ class NotebookAPIHandler(TokenAuthorizationMixin,
             # Get the source to execute in response to this request
             source_code = self.sources[self.request.method]
             # Build the request dictionary
+            print(type(self))
             request = json.dumps({
                 'body' : parse_body(self.request),
                 'args' : parse_args(self.request.query_arguments),
                 'path' : self.path_kwargs,
-                'headers' : headers_to_dict(self.request.headers)
+                'headers' : headers_to_dict(self.request.headers),
+                'authtoken': self.authtoken
             })
             # Turn the request string into a valid code string
             request_code = format_request(request, self.kernel_language)
@@ -254,6 +258,7 @@ class NotebookAPIHandler(TokenAuthorizationMixin,
 class NotebookDownloadHandler(TokenAuthorizationMixin,
                               CORSMixin,
                               JSONErrorsMixin,
+                              JWTAuthorizationMixin,
                               tornado.web.StaticFileHandler):
     """Handles requests to download the annotated notebook behind the web API.
     """

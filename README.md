@@ -60,3 +60,18 @@ jupyter kernelgateway
 ## Contributing
 
 The [Development page](https://jupyter-kernel-gateway.readthedocs.io/en/latest/devinstall.html) includes information about setting up a development environment and typical developer tasks.
+
+
+
+## To Edit with VS Code in docker
+- Open root in Python docker image
+- Run these commands to setup env
+  pip install -r requirements.txt
+  pip install -r requirements-test.txt
+  pip install -r requirements-doc.txt
+  pip install -e .
+
+python kernel_gateway \
+			--KernelGatewayApp.api='kernel_gateway.notebook_http' \
+			--KernelGatewayApp.seed_uri=etc/api_examples/api_intro.ipynb
+      

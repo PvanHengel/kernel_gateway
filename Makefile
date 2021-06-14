@@ -37,9 +37,15 @@ dev: ## Make a server in jupyter_websocket mode
 	$(SA) $(ENV) && python kernel_gateway
 
 dev-http: ## Make a server in notebook_http mode
-	$(SA) $(ENV) && python kernel_gateway \
+	python kernel_gateway \
 			--KernelGatewayApp.api='kernel_gateway.notebook_http' \
-			--KernelGatewayApp.seed_uri=etc/api_examples/api_intro.ipynb
+			--KernelGatewayApp.seed_uri=etc/api_examples/api_intro.ipynb \
+			--KernelGatewayApp.jwt_token='https://login.microsoftonline.com/c73bf3ef-87e9-48e0-ac85-9c723e6cca39/v2.0'
+
+dev-http1: ## Make a server in notebook_http mode
+	python kernel_gateway \
+			--KernelGatewayApp.api='kernel_gateway.notebook_http' \
+			--KernelGatewayApp.seed_uri=etc/api_examples/api_intro.ipynb 
 
 docs: ## Make HTML documentation
 	$(SA) $(ENV) && make -C docs html

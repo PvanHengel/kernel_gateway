@@ -132,6 +132,16 @@ class KernelGatewayApp(JupyterApp):
     def _auth_token_default(self):
         return os.getenv(self.auth_token_env, '')
 
+    # jwt authorization
+    jwt_token_env = 'KG_JWT_TOKEN'
+    jwt_token = Unicode(config=True,
+        help='Authorization token required for all requests (KG_JWT_TOKEN env var)'
+    )
+
+    @default('jwt_token')
+    def _jwt_token_default(self):
+        return os.getenv(self.jwt_token_env, '')
+        
     # CORS headers
     allow_credentials_env = 'KG_ALLOW_CREDENTIALS'
     allow_credentials = Unicode(config=True,
@@ -469,6 +479,7 @@ class KernelGatewayApp(JupyterApp):
             contents_manager=self.contents_manager,
             kernel_spec_manager=self.kernel_spec_manager,
             kg_auth_token=self.auth_token,
+            kg_jwt_token=self.jwt_token,
             kg_allow_credentials=self.allow_credentials,
             kg_allow_headers=self.allow_headers,
             kg_allow_methods=self.allow_methods,
